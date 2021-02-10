@@ -1,0 +1,35 @@
+specVersion: 0.0.1
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Contract
+    network: rinkeby
+    source:
+      address: "0x09468b265500789699d040eC1D750c2a7F2e40D2"
+      abi: Contract
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.2
+      language: wasm/assemblyscript
+      entities:
+        - CampaginAdded
+        - OwnershipTransferred
+        - Staked
+        - TokensClaimed
+        - Unstaked
+      abis:
+        - name: Contract
+          file: ./abis/Contract.json
+      eventHandlers:
+        - event: CampaginAdded(uint256,uint256)
+          handler: handleCampaginAdded
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Staked(indexed address,uint256,uint256,bytes)
+          handler: handleStaked
+        - event: TokensClaimed(indexed address,uint256)
+          handler: handleTokensClaimed
+        - event: Unstaked(indexed address,uint256,uint256,bytes)
+          handler: handleUnstaked
+      file: ./src/mapping.ts

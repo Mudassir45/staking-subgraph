@@ -1,0 +1,6 @@
+type ExampleEntity @entity {
+  id: ID!
+  count: BigInt!
+  startingTime: BigInt! # uint256
+  endingTime: BigInt! # uint256
+}
