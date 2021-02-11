@@ -1,6 +1,6 @@
 specVersion: 0.0.2
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: Contract
@@ -21,7 +21,7 @@ dataSources:
         - Unstaked
       abis:
         - name: Contract
-          file: ./abis/Contract.json
+          file: Contract/abis/Contract.json
       eventHandlers:
         - event: CampaginAdded(uint256,uint256)
           handler: handleCampaginAdded
@@ -33,4 +33,4 @@ dataSources:
           handler: handleTokensClaimed
         - event: Unstaked(indexed address,uint256,uint256,uint256,uint256)
           handler: handleUnstaked
-      file: ./src/mapping.ts
+      file: Contract/Contract.wasm

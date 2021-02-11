@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt, BigDecimal,log} from "@graphprotocol/graph-ts"
 import {
   Contract,
   CampaginAdded,
@@ -7,63 +7,75 @@ import {
   TokensClaimed,
   Unstaked
 } from "../generated/Contract/Contract"
-import { ExampleEntity } from "../generated/schema"
+import { User, Stake, Campain } from "../generated/schema"
+
+export function handleStaked(event: Staked): void {
+  let id = event.params.user.toHexString() + '-' + event.params.initialTimestamp.toHexString()
+  let stake = Stake.load(id);
+
+  if (!stake) {
+    stake = new Stake(id);
+    stake.amount = BigInt.fromI32(0)
+  }
+  stake.account = event.params.user;
+  stake.amount = stake.amount.plus(event.params.amount);
+  log.info("EVENT AMOUNT LOGGING,{}",[event.params.amount.toString()])
+  stake.timestamp = event.params.initialTimestamp;
+  stake.unstakeTimestamp = BigInt.fromI32(0);
+  stake.earnedAmount = BigInt.fromI32(0);
+  stake.campain = event.params.campaignTimestamp.toHex();
+
+  let user = User.load(event.params.user.toHexString());
+  
+  if (!user) {
+    user = new User(event.params.user.toHexString());
+    user.stakes=[];
+  }
+  user.account = event.params.user;
+  user.earned = BigInt.fromI32(0);
+
+  let temp = user.stakes;
+  temp.push(user.id);
+  user.stakes = temp;
+  user.totalStaked = user.totalStaked.plus(event.params.amount);
+
+  user.save();
+  stake.save();
+}
 
 export function handleCampaginAdded(event: CampaginAdded): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
-
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (entity == null) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
-
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
+  let campain = Campain.load(event.params.startingTime.toHexString());
+  if (campain == null) {
+    campain = new Campain(event.params.startingTime.toHexString());
   }
+  campain.startTimestamp = event.params.startingTime;
+  campain.endTimestamp = event.params.endingTime;
 
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
+  campain.save();
+}
 
-  // Entity fields can be set based on event parameters
-  entity.startingTime = event.params.startingTime
-  entity.endingTime = event.params.endingTime
+export function handleTokensClaimed(event: TokensClaimed): void {
+  let unstake = Stake.load(event.params.user.toHex() + '-' + event.params.timestamp.toHex());
+  
+  unstake.earnedAmount = unstake.earnedAmount.plus(event.params.rewardAmount);
 
-  // Entities can be written to the store with `.save()`
-  entity.save()
+  let user = User.load(event.params.user.toHexString());
+  user.earned = user.totalStaked.plus(event.params.rewardAmount);
 
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
-
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.unstakeQuery(...)
-  // - contract.campaignList(...)
-  // - contract.computeNewReward(...)
-  // - contract.getRewardToken(...)
-  // - contract.getStakingToken(...)
-  // - contract.owner(...)
-  // - contract.token(...)
-  // - contract.totaldistributionToken(...)
-  // - contract.totalStaked(...)
-  // - contract.totalStakedFor(...)
+  user.save();
+  unstake.save();
 }
 
 export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
 
-export function handleStaked(event: Staked): void {}
+export function handleUnstaked(event: Unstaked): void {
+  let unstake = Stake.load(event.params.user.toHex() + '-' + event.params.initialTimestamp.toHex());
+  
+  unstake.timestamp = event.params.endingTimestamp;
 
-export function handleTokensClaimed(event: TokensClaimed): void {}
+  let user = User.load(event.params.user.toHexString());
+  user.totalStaked = user.totalStaked.minus(event.params.amount);
 
-export function handleUnstaked(event: Unstaked): void {}
+  user.save();
+  unstake.save();
+}
