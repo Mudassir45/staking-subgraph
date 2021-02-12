@@ -69,21 +69,13 @@ export class User extends Entity {
     this.set("stakes", Value.fromStringArray(value));
   }
 
-  get totalStaked(): BigInt | null {
+  get totalStaked(): BigInt {
     let value = this.get("totalStaked");
-    if (value === null || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigInt();
-    }
+    return value.toBigInt();
   }
 
-  set totalStaked(value: BigInt | null) {
-    if (value === null) {
-      this.unset("totalStaked");
-    } else {
-      this.set("totalStaked", Value.fromBigInt(value as BigInt));
-    }
+  set totalStaked(value: BigInt) {
+    this.set("totalStaked", Value.fromBigInt(value));
   }
 }
 

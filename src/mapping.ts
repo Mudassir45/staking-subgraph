@@ -30,12 +30,13 @@ export function handleStaked(event: Staked): void {
   if (!user) {
     user = new User(event.params.user.toHexString());
     user.stakes=[];
+    user.totalStaked = BigInt.fromI32(0);
   }
   user.account = event.params.user;
   user.earned = BigInt.fromI32(0);
 
   let temp = user.stakes;
-  temp.push(user.id);
+  temp.push(stake.id);
   user.stakes = temp;
   user.totalStaked = user.totalStaked.plus(event.params.amount);
 

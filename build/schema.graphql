@@ -3,7 +3,7 @@ type User @entity {
   account: Bytes! 
   earned: BigInt! 
   stakes: [Stake!]! 
-  totalStaked: BigInt 
+  totalStaked: BigInt!
 }
 
 type Campain @entity {
